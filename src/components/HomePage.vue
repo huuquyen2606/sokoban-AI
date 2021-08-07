@@ -1,9 +1,9 @@
 <template>
   <v-container>
     <v-row class="text-center">
-      <v-col class="mb-5" cols="12" >
+      <v-col class="mb-3" cols="12" >
         <h2 class="headline font-weight-bold mb-5">
-          Type: {{typePlayer==true?'Single':'Duet With AI'}}
+          Type: {{settings.typePlayer==true?'Single':'Duet With AI'}}
         </h2>
         <v-row justify="center">
           <v-btn @click="chooseType(1)" color="blue-grey" class="ma-2" outlined>
@@ -20,18 +20,18 @@
           </v-btn>
         </v-row>
       </v-col>
-      <v-col class="mb-5" cols="12" >
+      <v-col class="mb-3" cols="12" >
         <h2 class="headline font-weight-bold mb-5">
-          Choose Level : {{level}}
+          Choose Level : {{settings.level}}
         </h2>
         <v-row justify="center">
-          <v-btn v-for="i in 10" :key="i" @click="chooseLevel(i)" class="ma-2" outlined large fab color="indigo">
+          <v-btn v-for="i in 11" :key="i" @click="chooseLevel(i)" class="ma-2" outlined large fab color="indigo">
             {{ i}}
           </v-btn>
         </v-row>
       </v-col>
-      <v-col class="mb-5" cols="12" >
-        <h2 class="headline font-weight-bold mb-5">
+      <v-col class="mb-3" cols="12" >
+        <h2 class="headline font-weight-bold mb-3">
           How to play 
         </h2>
         <div class="d-flex align-center justify-center">
@@ -58,6 +58,14 @@
           <h2 class="font-weight-bold"> to control </h2>
           <v-img class="shrink mr-2" contain src="../assets/svg/robot.svg" transition="scale-transition" width="80" />
         </div>
+        <v-row justify="center">
+          <v-btn @click="handleClick('state',true)" color="primary" class="mt-5" x-large  >
+            Play
+            <v-icon right dark large>
+              mdi-play
+            </v-icon>
+          </v-btn>
+        </v-row>
       </v-col>
     </v-row>
   </v-container>
@@ -66,17 +74,24 @@
 <script>
   export default {
     name: 'HomePage',
-
+    props:['actions'],
     data: () => ({
-      typePlayer: true,
-      level:1,
+      settings:{
+        typePlayer: true,
+        level:1,
+        state:false
+      }   
     }),
     methods: {
       chooseLevel(e){
-        this.level= e;
+        this.settings.level= e;
       },
       chooseType(e){
-        this.typePlayer= e==1?true:false;
+        this.settings.typePlayer= e==1?true:false;
+      },
+      handleClick(field,value){
+        this.settings[field]=value;
+        this.$emit('actions', this.settings);
       }
     },
   }
