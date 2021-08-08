@@ -12,13 +12,28 @@
                 </div>
             </v-col>
         </v-row>
+        <v-dialog v-model="winState" width="500" >
+            <v-card>
+                <v-card-title class="text-h5 justify-center">
+                    Congratulation
+                </v-card-title>
+                <!-- <v-card-text></v-card-text> -->
+                <v-divider></v-divider>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" @click="handleClick" >
+                        Next Level
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
 <script>
     export default {
         name: 'PlayPage',
-        props:['settings'],
+        props:['settings','actions'],
         data: () => ({
             level:[
                 {
@@ -151,65 +166,66 @@
             tileWidth: 64,
             tileHeight: 64,  
             size_x:0,
-            size_y:0,    
+            size_y:0,  
+            winState:false,
+            history:{x:0,y:0,move:false,block:false,blockInfo:{}},  
         }),
         methods: {
+            handleClick(){
+                this.winState = false;
+                this.settings.level+=1;
+                this.$emit('actions', this.settings);
+                this.loadActor();
+            },
             chooseLevel(e){
                 this.settings.level= e;
             },
             chooseType(e){
                 this.settings.typePlayer= e==1?true:false;
             },
-            handleClick(field,value){
-                this.settings[field]=value;
-                this.$emit('actions', this.settings);
-            },
-            // moveActor(actor, vectorX, vectorY) {
-            //     let tileWidth = this.$store.state.tile.width;
-            //     let tileHeight = this.$store.state.tile.height;
-            //     let maxX = this.$store.state.level.width - tileWidth;
-            //     let maxY = this.$store.state.level.height - tileHeight;
-
-            //     // Movement should remain in playground
-            //     if ((actor.x >= maxX) || (actor.y >= maxY) || (actor.x <= 0) || (actor.y <= 0)) {
-            //         return false;
-            //     }
-
-            //     // It's not possible to walk through walls
-            //     if (!this.isWalkable(actor.x + vectorX * tileWidth, actor.y + vectorY * tileHeight)) {
-            //         return false;
-            //     }
-            //     store.commit("moveVector", { actor, vectorX, vectorY });
-
-            //     // Update name of actor when it's final
-            //     if (this.isFinalPosition(actor.x, actor.y)) {
-            //         if (actor.name === "mfd") {
-            //             store.commit("updateName", { actor: actor, name: "mfd-final"});
-            //         }
-            //     } else {
-            //         if (actor.name === "mfd-final") {
-            //             store.commit("updateName", { actor: actor, name: "mfd"})
-            //         }
-            //     }
-            //     return true;
-            // },
-            moveAvatar(vectorX, vectorY) {
+            moveAvatar(vectorX, vectorY,back) {
                 for(let y=0; y<this.actors.length; y++){
                     if (this.actors[y].name=='avatar'){
                         let newX = (this.actors[y].x/this.tileWidth) + vectorX ;
                         let newY = (this.actors[y].y/this.tileHeight) + vectorY ;
                         let nearBlock = this.checkBlockNear(newX,newY);
                         if(this.moveAble(newX,newY,newX + vectorX,newY + vectorY,nearBlock)){
+                            this.history.move=true;
+                            this.history.x=vectorX;
+                            this.history.y=vectorY;
                             this.actors[y].x=newX*this.tileWidth;
                             this.actors[y].y=newY*this.tileHeight;
+                            if(back && this.history.block==true){
+                                this.actors[this.history.blockInfo.index].x+=vectorX*this.tileWidth;
+                                this.actors[this.history.blockInfo.index].y+=vectorY*this.tileHeight;
+                            }
                             if(nearBlock>=0){
+                                this.history.block=true;
+                                this.history.blockInfo.index=nearBlock;
                                 this.actors[nearBlock].x=(newX+vectorX)*this.tileWidth;
                                 this.actors[nearBlock].y=(newY+vectorY)*this.tileHeight;
+                            }else{
+                                this.history.block=false;
                             }
+                            
                         }
                         this.checkBulbOn();
                     }
                 }
+                if(this.checkWin()){
+                    this.winState=true;
+                }
+            },
+            checkWin(){
+                let i = 0;
+                for(let y=0; y<this.actors.length; y++){
+                    if (this.actors[y].name!='avatar' && this.actors[y].name=='mfd-final'){
+                        i +=1;
+                    }
+                }
+                if (i==(this.actors.length-1)){
+                    return true;
+                } else return false;
             },
             checkBlockNear(vectorX, vectorY){
                 for(let y=0; y<this.actors.length; y++){
@@ -237,29 +253,36 @@
                     }
                     if(this.level[this.settings.level-1].levelMap[vectorY][vectorX]==="w"||this.level[this.settings.level-1].levelMap[blockY][blockX]==="w"){
                         return false;
-                    }else return true;
+                    }else {
+                        return true;
+                    }
                 }else{
                     if(this.level[this.settings.level-1].levelMap[vectorY][vectorX]==="w"){
                         return false;
                     }else return true;  
                 }
-                 
             },
             handleKeyUp (e) {
                 if(e.key=="ArrowUp"){
-                    this.moveAvatar(0, -1);
+                    this.moveAvatar(0, -1,false);
                 } else if(e.key == "ArrowDown"){
-                    this.moveAvatar(0, 1);
+                    this.moveAvatar(0, 1,false);
                 }else if(e.key == "ArrowLeft"){
-                    this.moveAvatar(-1, 0);
+                    this.moveAvatar(-1, 0,false);
                 }else if(e.key == "ArrowRight"){
-                    this.moveAvatar(1, 0);
+                    this.moveAvatar(1, 0,false);
+                }else if(e.key == " "){
+                    if(this.history.move==true){
+                        this.moveAvatar(-this.history.x,-this.history.y,true);
+                        this.history={x:0,y:0,move:false,block:false,blockInfo:{}};
+                    }
                 }
             },
             loadActor(){
+                this.actors=[];
+                this.history={x:0,y:0,move:false,block:false,blockInfo:{}};
                 this.size_y = this.level[this.settings.level-1].levelMap.length;
                 this.size_x = this.level[this.settings.level-1].levelMap[0].length;
-                console.log(this.size_x,this.size_y)
                 for(let y = 0; y < this.size_y; y++) {
                     for (let x = 0; x < this.size_x; x++) {
                         let tile = this.level[this.settings.level-1].levelMap[y][x];

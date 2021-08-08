@@ -36,7 +36,7 @@
 
     <v-main>
       <HomePage v-if="!settings.state" @actions='settingsHandle' />
-      <PlayPage v-if="settings.state" :settings='settings'/>
+      <PlayPage v-if="settings.state" :settings='settings' @actions='settingsHandle'/>
     </v-main>
   </v-app>
 </template>

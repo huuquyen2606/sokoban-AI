@@ -57,9 +57,13 @@
           </v-icon>
           <h2 class="font-weight-bold"> to control </h2>
           <v-img class="shrink mr-2" contain src="../assets/svg/robot.svg" transition="scale-transition" width="80" />
-        </div>
+          <h2 class="font-weight-bold mr-2"> and [Space] to undo </h2>
+          <v-icon color="black" large>
+            mdi-history
+          </v-icon>
+        </div> 
         <v-row justify="center">
-          <v-btn @click="handleClick('state',true)" color="primary" class="mt-5" x-large  >
+          <v-btn @click="handleClick('state',true)" color="primary" class="mt-10" x-large  >
             Play
             <v-icon right dark large>
               mdi-play
